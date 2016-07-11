@@ -112,6 +112,20 @@
                 };
             };
 
+            var getImage = debounce(function() {
+                var pxD = 1.0;//window.devicePixelRatio;
+                var width = window.innerWidth*pxD;
+                var height = window.innerHeight*pxD;
+                var img = document.getElementById("map_es");
+                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+                var downloadingImage = new Image();
+                downloadingImage.onload = function(){
+                    img.src = this.src;   
+                    console.log('Loaded',image_url);
+                };
+                downloadingImage.src = image_url;
+            }, 1000);
+
             var map = (function () {
                 'use strict';
 
@@ -163,7 +177,6 @@
                     document.getElementById('map').style.width = window.innerWidth/2. + 'px';
                     document.getElementById('map').style.height = window.innerHeight + 'px';
                     map.invalidateSize(false);
-                    // debounce(getImage, 500);
                     getImage();
                 }
 
@@ -176,8 +189,12 @@
                 });
 
                 // On drag
-                map.on('moveend', function () {
-                    update(this);
+                map.on('dragend', function () {
+                    moveEnd(this);
+                });
+
+                map.on('zoomend', function () {
+                    zoomEnd(this);
                 });
 
                 //disable mousewheel zoom if iframed
@@ -191,37 +208,41 @@
                 var style = e.value;
                 window.style_file = style;
                 scene.load(style);
-                // debounce(getImage, 500);
                 getImage();
             }
 
-            function update(el) {
+            function moveEnd(el) {
                 var pos = el.getCenter();
-                var zoom = el.getZoom();
-
                 if (pos.lat != lastPos.lat ||
-                    pos.lng != lastPos.lng ||
-                    zoom != lastZoom) {
+                    pos.lng != lastPos.lng ) {
                     lastPos = pos;
-                    lastZoom = zoom;
-                    // debounce(getImage, 500);
                     getImage();
                 }
             }
 
-            function getImage() {
-                var width = window.innerWidth;
-                var height = window.innerHeight;
+            function zoomEnd(el) {
+                var zoom = el.getZoom();
+                if (zoom != lastZoom) {
+                    lastZoom = zoom;
+                    getImage();
+                }
+            }
+
+            function getImg () {
+                var pxD = 1.0;//window.devicePixelRatio;
+                var width = window.innerWidth*pxD;
+                var height = window.innerHeight*pxD;
                 var img = document.getElementById("map_es");
-                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + lastZoom + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
                 var downloadingImage = new Image();
                 downloadingImage.onload = function(){
                     img.src = this.src;   
                     console.log('Loaded',image_url);
                 };
-                
                 downloadingImage.src = image_url;
             }
+
+            
         </script>
 
         
