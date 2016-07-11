@@ -163,6 +163,8 @@
                     document.getElementById('map').style.width = window.innerWidth/2. + 'px';
                     document.getElementById('map').style.height = window.innerHeight + 'px';
                     map.invalidateSize(false);
+                    // debounce(getImage, 500);
+                    getImage();
                 }
 
                 window.addEventListener('resize', resizeMap);
