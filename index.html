@@ -78,8 +78,8 @@
     
         <!-- Demo module -->
         <script type="text/javascript">
-            var lastPos = {lat:0, lng: 0};
-            var lastZoom = 1;
+            var lastPos = {lat:40.70531887544228, lng: -74.00976419448853};
+            var lastZoom = 16;
             var paparazzi_server = 'http://54.175.238.166/';
 
             function parseQuery (qstr) {
@@ -233,10 +233,17 @@
                 var width = window.innerWidth*pxD;
                 var height = window.innerHeight*pxD;
                 var img = document.getElementById("map_es");
-                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+                var lat = lastPos.lat;
+                var lng = lastPos.lng;
+                var z = lastZoom;
+                console.log(lat,lng,z);
+
+                var image_url = paparazzi_server+'?lat='+ lat + '&lon=' + lng + '&zoom=' + lastZoom + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+
                 var downloadingImage = new Image();
                 downloadingImage.onload = function(){
-                    img.src = this.src;   
+                    img.src = this.src;
+
                     console.log('Loaded',image_url);
                 };
                 downloadingImage.src = image_url;
