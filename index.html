@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Tangram Magazine</title>
+
+    <!-- 3rd party libraries -->
+        <!-- Leaflet -->
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.css" />
+        <script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.js"></script>
+        <!-- bog-standard leaflet URL hash -->
+        <script type="text/javascript" src="https://cdn.rawgit.com/mlevans/leaflet-hash/master/leaflet-hash.js"></script>
+        <!-- Main tangram library -->
+        <script src="https://mapzen.com/tangram/0.8/tangram.min.js"></script>
+    <!-- End of 3rd party libraries -->
+
+    <style>
+            body {
+                margin: 0px;
+                border: 0px;
+                padding: 0px;
+                overflow: hidden;
+            }
+
+            #map {
+                position: absolute;
+                background: black;
+                height: 100%;
+                width: 100%;
+                margin: 0px;
+                padding: 0px;
+                background: rgba(0, 0, 0, 0);
+                z-index: 0;
+            }
+
+            #map_es {
+                position: fixed;
+                left: 0px;
+                top: 0px;
+                z-index: 2;
+            }
+
+            #url_container {
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translate(-50%, 0px);
+                width: 80%;
+                z-index: 3;
+                background-color: rgba(128, 128, 128, 0.51);
+                padding: 5px;
+                padding-right: 18px;
+            }
+            #url {
+                width: 100%;
+                height: 25px;
+                font-size: 18px;
+                font-family: Helvetica, sans;
+                color: #343434;
+                border-color: #444;
+                border-width: 5px;
+                border-style: solid;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <img id="map_es">
+        <div id='url_container'>
+            <input id="url" type="text" value="http://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
+        </div>
+    
+        <!-- Demo module -->
+        <script type="text/javascript">
+            var lastPos = {lat:0, lng: 0};
+            var lastZoom = 1;
+            var paparazzi_server = 'http://54.175.238.166/';
+
+            function parseQuery (qstr) {
+                var query = {};
+                var a = qstr.split('&');
+                for (var i in a) {
+                    var b = a[i].split('=');
+                    query[decodeURIComponent(b[0])] = decodeURIComponent(b[1]);
+                }
+                return query;
+            }
+
+            function isValidURL(str) {
+                var re = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?\.yaml/;
+                return re.test(str);
+            }
+
+            function debounce(func, wait, immediate) {
+                var timeout;
+                return function() {
+                    var context = this, args = arguments;
+                    var later = function() {
+                        timeout = null;
+                        if (!immediate) func.apply(context, args);
+                    };
+                    var callNow = immediate && !timeout;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                    if (callNow) func.apply(context, args);
+                };
+            };
+
+            var map = (function () {
+                'use strict';
+
+                var map_start_location = [40.70531887544228, -74.00976419448853, 16];
+
+                /*** URL parsing ***/
+
+                // leaflet-style URL hash pattern:
+                // ?style.yaml#[zoom],[lat],[lng]
+                var url_hash = window.location.hash.slice(1).split('/');
+                if (url_hash.length == 3) {
+                    map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
+                    lastZoom = url_hash[0];
+                    lastPos.lat = url_hash[1];
+                    lastPos.lng = url_hash[2];
+                    // convert from strings
+                    map_start_location = map_start_location.map(Number);
+                }
+
+                var style_file = 'http://tangrams.github.io/tangram-sandbox/styles/default.yaml';
+                var query = parseQuery(window.location.search.slice(1));
+                if (query['style'] && isValidURL(query['style'])) {
+                    style_file = query['style'];
+                }
+                window.style_file = style_file;
+
+                /*** Map ***/
+                var map = L.map('map', {
+                    maxZoom: 20,
+                    trackResize: true,
+                    scrollWheelZoom: (window.self === window.top) ? 'center' : false,
+                    keyboard: false
+                });
+
+                var layer = Tangram.leafletLayer({
+                    scene: style_file,
+                    attribution: '| &copy; OSM contributors | <a href="https://mapzen.com/tangram" target="_blank">Tangram</a> | <a href="https://twitter.com/patriciogv" target="_blank">@patriciogv</a>'
+                });
+
+                window.layer = layer;
+                var scene = layer.scene;
+                window.scene = scene;
+
+                map.setView(map_start_location.slice(0, 2), map_start_location[2]);
+                var hash = new L.Hash(map);
+
+                // Resize map to window
+                function resizeMap() {
+                    document.getElementById('map').style.width = window.innerWidth + 'px';
+                    document.getElementById('map').style.height = window.innerHeight + 'px';
+                    map.invalidateSize(false);
+                }
+
+                window.addEventListener('resize', resizeMap);
+                resizeMap();
+
+                window.addEventListener('load', function () {
+                    // Scene initialized
+                    layer.addTo(map);
+                });
+
+                // On drag
+                map.on('moveend', function () {
+                    update(this);
+                });
+
+                //disable mousewheel zoom if iframed
+                if (window.self !== window.top) {
+                    map.scrollWheelZoom.disable();
+                }
+                return map;
+            }());
+
+            function newURL(e) {
+                var style = e.value;
+                window.style_file = style;
+                console.log(style);
+                scene.load(style);
+                // debounce(getImage, 500);
+                getImage();
+            }
+
+            function update(el) {
+                var pos = el.getCenter();
+                var zoom = el.getZoom();
+                console.log(zoom);
+                if (pos.lat != lastPos.lat ||
+                    pos.lng != lastPos.lng ||
+                    zoom != lastZoom) {
+                    lastPos = pos;
+                    lastZoom = zoom;
+                    // debounce(getImage, 500);
+                    getImage();
+                }
+            }
+
+            function getImage() {
+                var width = window.innerWidth;
+                var height = window.innerHeight;
+                var img = document.getElementById("map_es");
+                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + lastZoom + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+                var downloadingImage = new Image();
+                downloadingImage.onload = function(){
+                    img.src = this.src;   
+                    console.log('Loaded',image_url);
+                };
+                
+                downloadingImage.src = image_url;
+            }
+        </script>
+
+        
+
+        <!-- Adding a script block to post message to the parent container (think iframed demos) -->
+        <script type="text/javascript">
+          window.addEventListener("hashchange",function(){parent.postMessage(window.location.hash, "*")});
+        </script>
+        <!-- Mapzen bug & search bar -->
+        <script src='https://mapzen.com/common/ui/mapzen-ui.min.js'></script>
+        <script>
+                MPZN.bug({
+                name: 'Tangram',
+                tweet: 'WebGL map insanity from @patriciogv, power by @mapzen!',
+                repo: 'https://github.com/tangrams/tangram/'
+            });
+        </script>
+    </body>
+</html>
