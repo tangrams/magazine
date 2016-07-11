@@ -71,7 +71,7 @@
         <div id="map"></div>
         <img id="map_es">
         <div id='url_container'>
-            <input id="url" type="text" value="http://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
+            <input id="url" type="text" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
         </div>
     
         <!-- Demo module -->
@@ -129,7 +129,7 @@
                     map_start_location = map_start_location.map(Number);
                 }
 
-                var style_file = 'http://tangrams.github.io/tangram-sandbox/styles/default.yaml';
+                var style_file = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
                 var query = parseQuery(window.location.search.slice(1));
                 if (query['style'] && isValidURL(query['style'])) {
                     style_file = query['style'];
