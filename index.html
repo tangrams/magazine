@@ -54,17 +54,19 @@
                 z-index: 3;
                 background-color: rgba(128, 128, 128, 0.51);
                 padding: 5px;
-                padding-right: 18px;
+                padding-right: 25px;
             }
             #url {
                 width: 100%;
                 height: 25px;
-                font-size: 18px;
-                font-family: Helvetica, sans;
-                color: #343434;
+                font-size: 17px;
+                font-family: helvetica, arial ,sans-serif;
+                color: white;
                 border-color: #444;
                 border-width: 5px;
                 border-style: solid;
+                background: gray;
+                padding: 5px;
             }
         </style>
     </head>
@@ -162,7 +164,7 @@
 
                 var layer = Tangram.leafletLayer({
                     scene: style_file,
-                    attribution: '| &copy; OSM contributors | <a href="https://mapzen.com/tangram" target="_blank">Tangram</a> | <a href="https://twitter.com/patriciogv" target="_blank">@patriciogv</a>'
+                    attribution: '| &copy; OSM contributors | <a href="https://mapzen.com/tangram" target="_blank">Tangram</a>'
                 });
 
                 window.layer = layer;
@@ -229,9 +231,9 @@
             }
 
             function getImg () {
-                var pxD = 1.0;//window.devicePixelRatio;
-                var width = window.innerWidth*pxD;
-                var height = window.innerHeight*pxD;
+                var pxR = 1;//window.devicePixelRatio;
+                var width = window.innerWidth*pxR;
+                var height = window.innerHeight*pxR;
                 var img = document.getElementById("map_es");
                 var lat = lastPos.lat;
                 var lng = lastPos.lng;
