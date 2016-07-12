@@ -77,12 +77,17 @@
         <div id='url_container'>
             <input id="url" type="text" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
         </div>
-    
+
         <!-- Demo module -->
         <script type="text/javascript">
+            // CONST
+            var DEFAULT_STYLE = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
+            var PAPARAZI_SERVER = 'http://54.175.238.166/';
+            // PAPARAZI_SERVER = 'http://192.168.2.134:8080/';
+
+            // global var
             var lastPos = {lat:40.70531887544228, lng: -74.00976419448853};
             var lastZoom = 16;
-            var paparazzi_server = 'http://54.175.238.166/';
 
             function parseQuery (qstr) {
                 var query = {};
@@ -92,6 +97,36 @@
                     query[decodeURIComponent(b[0])] = decodeURIComponent(b[1]);
                 }
                 return query;
+            }
+
+            function updateQuery (key, value, url) {
+                if (!url) url = window.location.href;
+                var re = new RegExp("([?&])" + key + "=.*?(&|#|$)(.*)", "gi"),
+                    hash;
+
+                if (re.test(url)) {
+                    if (typeof value !== 'undefined' && value !== null)
+                        return url.replace(re, '$1' + key + "=" + value + '$2$3');
+                    else {
+                        hash = url.split('#');
+                        url = hash[0].replace(re, '$1$3').replace(/(&|\?)$/, '');
+                        if (typeof hash[1] !== 'undefined' && hash[1] !== null) 
+                            url += '#' + hash[1];
+                        return url;
+                    }
+                }
+                else {
+                    if (typeof value !== 'undefined' && value !== null) {
+                        var separator = url.indexOf('?') !== -1 ? '&' : '?';
+                        hash = url.split('#');
+                        url = hash[0] + separator + key + '=' + value;
+                        if (typeof hash[1] !== 'undefined' && hash[1] !== null) 
+                            url += '#' + hash[1];
+                        return url;
+                    }
+                    else
+                        return url;
+                }
             }
 
             function isValidURL(str) {
@@ -114,12 +149,12 @@
                 };
             };
 
-            var getImage = debounce(function() {
-                var pxD = 1.0;//window.devicePixelRatio;
-                var width = window.innerWidth*pxD;
-                var height = window.innerHeight*pxD;
+            var updateImage = debounce(function() {
+                var size = map.getSize();
+                var width = size.x; //window.innerWidth;
+                var height = size.y; //window.innerHeight;
                 var img = document.getElementById("map_es");
-                var image_url = paparazzi_server+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
+                var image_url = PAPARAZI_SERVER+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
                 var downloadingImage = new Image();
                 downloadingImage.onload = function(){
                     img.src = this.src;   
@@ -131,13 +166,13 @@
             var map = (function () {
                 'use strict';
 
-                var map_start_location = [40.70531887544228, -74.00976419448853, 16];
+                
 
                 /*** URL parsing ***/
-
                 // leaflet-style URL hash pattern:
                 // ?style.yaml#[zoom],[lat],[lng]
                 var url_hash = window.location.hash.slice(1).split('/');
+                var map_start_location = [lastPos.lat, lastPos.lng, lastZoom];
                 if (url_hash.length == 3) {
                     map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
                     lastZoom = url_hash[0];
@@ -147,13 +182,16 @@
                     map_start_location = map_start_location.map(Number);
                 }
 
-                var style_file = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
+                window.style_file = DEFAULT_STYLE;
                 var query = parseQuery(window.location.search.slice(1));
-                if (query['style'] && isValidURL(query['style'])) {
-                    style_file = query['style'];
+                if (query['scene'] && isValidURL(query['scene'])) {
+                    window.style_file = query['scene'];
                 }
-                window.style_file = style_file;
-
+                var map_url = document.getElementById('url');
+                if (window.style_file !== DEFAULT_STYLE) {
+                    map_url.value = window.style_file;
+                }
+        
                 /*** Map ***/
                 var map = L.map('map', {
                     maxZoom: 20,
@@ -163,10 +201,11 @@
                 });
 
                 var layer = Tangram.leafletLayer({
-                    scene: style_file,
+                    scene: window.style_file,
                     attribution: '| &copy; OSM contributors | <a href="https://mapzen.com/tangram" target="_blank">Tangram</a>'
                 });
 
+                window.map = map;
                 window.layer = layer;
                 var scene = layer.scene;
                 window.scene = scene;
@@ -179,7 +218,7 @@
                     document.getElementById('map').style.width = window.innerWidth/2. + 'px';
                     document.getElementById('map').style.height = window.innerHeight + 'px';
                     map.invalidateSize(false);
-                    getImage();
+                    updateImage();
                 }
 
                 window.addEventListener('resize', resizeMap);
@@ -192,11 +231,20 @@
 
                 // On drag
                 map.on('dragend', function () {
-                    moveEnd(this);
+                    var pos = map.getCenter();
+                    if (pos.lat != lastPos.lat ||
+                        pos.lng != lastPos.lng ) {
+                        lastPos = pos;
+                        updateImage();
+                    }
                 });
 
                 map.on('zoomend', function () {
-                    zoomEnd(this);
+                    var zoom = map.getZoom();
+                    if (zoom != lastZoom) {
+                        lastZoom = zoom;
+                        updateImage();
+                    }
                 });
 
                 //disable mousewheel zoom if iframed
@@ -208,50 +256,8 @@
 
             function newURL(e) {
                 var style = e.value;
-                window.style_file = style;
-                scene.load(style);
-                getImage();
+                window.location.href = updateQuery('scene',e.value);
             }
-
-            function moveEnd(el) {
-                var pos = el.getCenter();
-                if (pos.lat != lastPos.lat ||
-                    pos.lng != lastPos.lng ) {
-                    lastPos = pos;
-                    getImage();
-                }
-            }
-
-            function zoomEnd(el) {
-                var zoom = el.getZoom();
-                if (zoom != lastZoom) {
-                    lastZoom = zoom;
-                    getImage();
-                }
-            }
-
-            function getImg () {
-                var pxR = 1;//window.devicePixelRatio;
-                var width = window.innerWidth*pxR;
-                var height = window.innerHeight*pxR;
-                var img = document.getElementById("map_es");
-                var lat = lastPos.lat;
-                var lng = lastPos.lng;
-                var z = lastZoom;
-                console.log(lat,lng,z);
-
-                var image_url = paparazzi_server+'?lat='+ lat + '&lon=' + lng + '&zoom=' + lastZoom + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
-
-                var downloadingImage = new Image();
-                downloadingImage.onload = function(){
-                    img.src = this.src;
-
-                    console.log('Loaded',image_url);
-                };
-                downloadingImage.src = image_url;
-            }
-
-            
         </script>
 
         
