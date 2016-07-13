@@ -280,17 +280,17 @@
                     container.appendChild(this);
 
                     // Download the 
-                    document.getElementById("paparazzi_log").innerHTML='<object id="console_log" type="text/html" style="width: 100%; height:100%;" data="'+lastReq+'&ext=log'+'" ></object>';
+                    document.getElementById("paparazzi_log").innerHTML='<object id="console_log" type="text/html" style="width: 100%; height:100%;" data="'+lastReq+'&ext=log'+'" crossorigin="anonymous"></object>';
                     document.getElementById("console_log").style.height = window.innerHeight + 'px';
 
                     shader.loadTexture('u_texB',this);
                     finishUpdate();
+
+                    scene.screenshot().then(function(screenshot) {
+                        shader.loadTexture('u_texA',screenshot.url);
+                    });
                 };
 
-                scene.screenshot().then(function(screenshot) {
-                    shader.loadTexture('u_texA',screenshot.url);
-                });
-                
                 downloadingImage.src = lastReq;
                 startUpdate();
             }, 1000);
