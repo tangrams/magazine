@@ -21,6 +21,9 @@
         <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
         <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <!-- GlslViewer -->
+        <script type="text/javascript" src="src/GlslCanvas.js"></script>
+
     <!-- End of 3rd party libraries -->
 
     <style>
@@ -66,19 +69,23 @@
                 background: white;
             }
 
+            #shader_container {
+                height: 100%;
+                width: 100%;
+                margin: 0px;
+                padding: 0px;
+                background: blue;
+            }
+
             #url_container {
                 width: 80%;
                 z-index: 3;
                 padding: 5px;
             }
 
-            #url_input {
+            #shader {
                 width: 100%;
-                height: 40px;
-                font-size: 17px;
-                font-family: helvetica, arial ,sans-serif;
-                color: white;
-                padding: 5px;
+                height: 100%;
             }
         </style>
     </head>
@@ -87,16 +94,18 @@
         <div id="container">
             <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
                 <li role="presentation" class="active"><a data-toggle="tab" href="#map"><span class="glyphicon glyphicon-move" aria-hidden="true"></span></a></li>
-                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_image"><span class="glyphicon glyphicon-picture" aria-hidden="true"></span></a></li>
+                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_image"><span class="glyphicon glyphicon-phone" aria-hidden="true"></span></a></li>
                 <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_log"><span class="glyphicon glyphicon-console" aria-hidden="true"></span></a></li>
+                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#map_shader"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></li>
                 <li id='url_container' >
-                    <!-- <div id='url_container'> -->
-                        <input type="url_input" class="form-control" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" placeholder="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
-                    <!-- </div>  -->
+                    <input id="url_input" class="form-control" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" placeholder="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
                 </li>
             </ul>
             <div id="my-tab-content" class="tab-content">
                 <div id="map" class="tab-pane active" ></div>
+                <div id="map_shader" class="tab-pane">
+                    <canvas id="shader" data-fragment-url="shader.frag" width="500" height="500"></canvas>
+                </div>
                 <div id="paparazzi_image" class="tab-pane"></div>
                 <div id="paparazzi_log" class="tab-pane"></div>
             </div>
@@ -118,15 +127,16 @@
             var lastPos = {lat:40.70531887544228, lng: -74.00976419448853};
             var lastZoom = 16;
             var lastReq = "";
-            var opts = {
+            var shader = {};
+            var spinner = new Spinner({
                       lines: 11 // The number of lines to draw
                     , length: 28 // The length of each line
                     , width: 14 // The line thickness
                     , radius: 42 // The radius of the inner circle
-                    , scale: 1 // Scales overall size of the spinner
+                    , scale: .5 // Scales overall size of the spinner
                     , corners: 1 // Corner roundness (0..1)
-                    , color: '#000' // #rgb or #rrggbb or array of colors
-                    , opacity: 0.25 // Opacity of the lines
+                    , color: '#FFF' // #rgb or #rrggbb or array of colors
+                    , opacity: 0.5 // Opacity of the lines
                     , rotate: 0 // The rotation offset
                     , direction: 1 // 1: clockwise, -1: counterclockwise
                     , speed: 1 // Rounds per second
@@ -139,8 +149,7 @@
                     , shadow: false // Whether to render a shadow
                     , hwaccel: false // Whether to use hardware acceleration
                     , position: 'absolute' // Element positioning
-                }
-            var spinner = new Spinner(opts)
+                })
 
             function parseQuery (qstr) {
                 var query = {};
@@ -207,7 +216,11 @@
                 for (var i = tabs.length - 1; i >= 0; i--) {
                     tabs[i].style.visibility = "hidden";
                 }
-                spinner = new Spinner().spin(document.getElementById('container'));
+                spinner.spin();
+                var container = document.getElementById('container');
+                container.appendChild(spinner.el);
+                container.style.opacity = .5;
+
             }
 
             function finishUpdate() {
@@ -216,6 +229,21 @@
                     tabs[i].style.visibility = "visible";
                 }
                 spinner.stop();
+                var container = document.getElementById('container');
+                container.style.opacity = 1.;
+            }
+
+            // Resize map to window
+            function resize() {
+                document.getElementById('map').style.width = window.innerWidth + 'px';
+                document.getElementById('map').style.height = window.innerHeight + 'px';
+                map.invalidateSize(false);
+                updateImage();
+                if (shader.canvas) {
+                    shader.canvas.style.width = window.innerWidth + 'px';
+                    shader.canvas.style.height = window.innerHeight + 'px';
+                    shader.resize();
+                }   
             }
 
             var updateImage = debounce(function() {
@@ -225,17 +253,33 @@
                 var container = document.getElementById("paparazzi_image");
                 lastReq = PAPARAZI_SERVER+'?lat='+ lastPos.lat + '&lon=' + lastPos.lng + '&zoom=' + (lastZoom) + '&width=' + width + '&height=' + height + '&scene=' + window.style_file;
                 var downloadingImage = new Image();
+                downloadingImage.crossOrigin= "anonymous";
+
                 downloadingImage.onload = function(){
                     container.innerHTML = "";
                     container.appendChild(this);
-                    console.log('Loaded',lastReq)
+
+                    // Download the 
                     document.getElementById("paparazzi_log").innerHTML='<object id="console_log" type="text/html" style="width: 100%; height:100%;" data="'+lastReq+'&ext=log'+'" ></object>';
                     document.getElementById("console_log").style.height = window.innerHeight + 'px';
+
+                    shader.loadTexture('u_texB',this);
                     finishUpdate();
                 };
-                startUpdate();
+
+                scene.screenshot().then(function(screenshot) {
+                    shader.loadTexture('u_texA',screenshot.url);
+                });
+                
                 downloadingImage.src = lastReq;
+                startUpdate();
             }, 1000);
+
+            // Every time someone change the URL to the .yaml scene file
+            function newURL(e) {
+                var style = e.value;
+                window.location.href = updateQuery('scene',e.value);
+            }
 
             var map = (function () {
                 'use strict';
@@ -284,16 +328,10 @@
                 map.setView([lastPos.lat, lastPos.lng], lastZoom);
                 var hash = new L.Hash(map);
 
-                // Resize map to window
-                function resizeMap() {
-                    document.getElementById('map').style.width = window.innerWidth + 'px';
-                    document.getElementById('map').style.height = window.innerHeight + 'px';
-                    map.invalidateSize(false);
-                    updateImage();
-                }
+                shader = new GlslCanvas(document.getElementById('shader'));
 
-                window.addEventListener('resize', resizeMap);
-                resizeMap();
+                window.addEventListener('resize', resize);
+                resize();
 
                 window.addEventListener('load', function () {
                     // Scene initialized
@@ -325,19 +363,17 @@
                 }
                 return map;
             }());
-
-            // Every time someone change the URL to the .yaml scene file
-            function newURL(e) {
-                var style = e.value;
-                window.location.href = updateQuery('scene',e.value);
-            }
         </script>
-
-        
 
         <!-- Adding a script block to post message to the parent container (think iframed demos) -->
         <script type="text/javascript">
           window.addEventListener("hashchange",function(){parent.postMessage(window.location.hash, "*")});
+        </script>
+
+        <!-- Mapzen bug & search bar -->
+        <script src='https://mapzen.com/common/ui/mapzen-ui.min.js'></script>
+        <script>
+            MPZN.bug();
         </script>
     </body>
 </html>
