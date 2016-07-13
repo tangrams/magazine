@@ -87,6 +87,11 @@
                 width: 100%;
                 height: 100%;
             }
+
+            #shader_btn {
+                position: absolute;
+                margin: 5px;
+            }
         </style>
     </head>
 
@@ -96,7 +101,7 @@
                 <li role="presentation" class="active"><a data-toggle="tab" href="#map"><span class="glyphicon glyphicon-move" aria-hidden="true"></span></a></li>
                 <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_image"><span class="glyphicon glyphicon-phone" aria-hidden="true"></span></a></li>
                 <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_log"><span class="glyphicon glyphicon-console" aria-hidden="true"></span></a></li>
-                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#map_shader"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></li>
+                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#map_shader"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a></li>
                 <li id='url_container' >
                     <input id="url_input" class="form-control" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" placeholder="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
                 </li>
@@ -104,6 +109,13 @@
             <div id="my-tab-content" class="tab-content">
                 <div id="map" class="tab-pane active" ></div>
                 <div id="map_shader" class="tab-pane">
+                    <div id="shader_btn">
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(0)">Side-by-side</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(1)">Ghost</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(2)">JS + Diff</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(3)">ES + Diff</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(4)">Area</button>
+                    </div>
                     <canvas id="shader" data-fragment-url="shader.frag" width="500" height="500"></canvas>
                 </div>
                 <div id="paparazzi_image" class="tab-pane"></div>
@@ -244,6 +256,12 @@
                     shader.canvas.style.height = window.innerHeight + 'px';
                     shader.resize();
                 }   
+            }
+
+            function setShaderMode(mode) {
+                if (shader.canvas) {
+                    shader.setUniform('u_mode', mode);
+                }
             }
 
             var updateImage = debounce(function() {
