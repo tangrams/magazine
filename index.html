@@ -111,10 +111,12 @@
                 <div id="map_shader" class="tab-pane">
                     <div id="shader_btn">
                         <button type="button" class="btn btn-default" onclick="setShaderMode(0)">Side-by-side</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(1)">Ghost</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(2)">JS + Diff</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(3)">ES + Diff</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(4)">Area</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(1)">Area</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(2)">Ghost</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(3)">Abs Diff</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(4)">Max Diff</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(5)">JS + Diff</button>
+                        <button type="button" class="btn btn-default" onclick="setShaderMode(6)">ES + Diff</button>
                     </div>
                     <canvas id="shader" data-fragment-url="shader.frag" width="500" height="500"></canvas>
                 </div>
