@@ -78,16 +78,24 @@
                 position: fixed;
                 top: 5px;
                 right: 5px;
+                z-index: 4;
+                background-color: gray;
+                border-width: 0px;
             }
             #console_container {
                 position: fixed;
-                top: 20px;
+                top: 45px;
                 right: 5px;
-                width: 50%;
+                width: 49%;
+                top: 35px;
+                padding: 5px;
+                background: gray;
+                border-radius: 5px;
             }
             #console {
                 width: 100%;
                 height: 100%;
+                background: white;
             }
         </style>
     </head>
@@ -98,7 +106,7 @@
         <div id='url_container'>
             <input id="url" type="text" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
         </div>
-        <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#console_container">DEBUG</button>
+        <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#console_container">>_</button>
         <div id="console_container" class="collapse"></div>
 
         <!-- Demo module -->
@@ -106,7 +114,7 @@
             // CONST
             var DEFAULT_STYLE = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
             var PAPARAZI_SERVER = 'http://54.175.238.166/';
-            // PAPARAZI_SERVER = 'http://192.168.2.134:8080/';
+            PAPARAZI_SERVER = 'http://192.168.2.134:8080/';
 
             // global var
             var lastPos = {lat:40.70531887544228, lng: -74.00976419448853};
@@ -195,14 +203,10 @@
                 // leaflet-style URL hash pattern:
                 // ?style.yaml#[zoom],[lat],[lng]
                 var url_hash = window.location.hash.slice(1).split('/');
-                var map_start_location = [lastPos.lat, lastPos.lng, lastZoom];
                 if (url_hash.length == 3) {
-                    map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
-                    lastZoom = url_hash[0];
-                    lastPos.lat = url_hash[1];
-                    lastPos.lng = url_hash[2];
-                    // convert from strings
-                    map_start_location = map_start_location.map(Number);
+                    lastZoom = parseFloat(url_hash[0]);
+                    lastPos.lat = parseFloat(url_hash[1]);
+                    lastPos.lng = parseFloat(url_hash[2]);
                 }
 
                 // Watch for a scene to load on the query string
@@ -236,7 +240,7 @@
                 window.scene = layer.scene;
 
                 // Initialize Tangram
-                map.setView(map_start_location.slice(0, 2), map_start_location[2]);
+                map.setView([lastPos.lat, lastPos.lng], lastZoom);
                 var hash = new L.Hash(map);
 
                 // Resize map to window
@@ -297,11 +301,7 @@
         <!-- Mapzen bug & search bar -->
         <script src='https://mapzen.com/common/ui/mapzen-ui.min.js'></script>
         <script>
-                MPZN.bug({
-                name: 'Tangram',
-                tweet: 'WebGL map insanity from @patriciogv, power by @mapzen!',
-                repo: 'https://github.com/tangrams/tangram/'
-            });
+                MPZN.bug();
         </script>
     </body>
 </html>
