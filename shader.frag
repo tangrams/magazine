@@ -5,7 +5,6 @@ precision mediump float;
 uniform sampler2D u_texA;   // Tangram.js
 uniform sampler2D u_texB;   // Tangram-ES
 uniform float u_mode;
-uniform float u_area_size;
 
 uniform float u_pixel_density;
 uniform vec2 u_resolution;
@@ -39,7 +38,7 @@ void main() {
         st.y *= resolution.y/resolution.x;
         
         float pct = dot(st,st);
-        float magSize = u_area_size;
+        float magSize = 0.01;
         color = mix(B.rgb, A.rgb, step(magSize,pct));
         color = mix(color, vec3(0.200,0.478,0.718),pulse(magSize,1./(resolution.x),pct));
     } else if (u_mode == 2.0){
