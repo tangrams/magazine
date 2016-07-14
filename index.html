@@ -10,17 +10,17 @@
     <!-- 3rd party libraries -->
         <!-- Leaflet -->
         <link rel="stylesheet" href="src/leaflet.css" />
-        <script src="src/leaflet.js"></script>
+        <script type="text/javascript" src="src/leaflet.js"></script>
         <!-- bog-standard leaflet URL hash -->
         <script type="text/javascript" src="https://cdn.rawgit.com/mlevans/leaflet-hash/master/leaflet-hash.js"></script>
         <!-- Main tangram library -->
-        <script src="https://mapzen.com/tangram/0.8/tangram.min.js"></script>
+        <script type="text/javascript" src="https://mapzen.com/tangram/0.8/tangram.min.js"></script>
         <!-- Spinning wheel -->
-        <script src="src/spin.min.js"></script>
+        <script type="text/javascript" src="src/spin.min.js"></script>
         <!-- Bootstrap -->
         <link rel="stylesheet" href="src/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-        <script src="src/bootstrap.min.js"></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <script type="text/javascript" src="src/bootstrap.min.js"></script>
         <!-- GlslViewer -->
         <script type="text/javascript" src="src/GlslCanvas.js"></script>
         <!-- Fetch.js -->
@@ -135,6 +135,7 @@
             });
 
             // CONST
+            var DEBOUNCE_TIME = 2000;
             var DEFAULT_STYLE = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
             var PAPARAZI_SERVER = 'http://54.175.238.166/';
             // PAPARAZI_SERVER = 'http://192.168.2.134:8080/';
@@ -165,7 +166,7 @@
                     , shadow: false // Whether to render a shadow
                     , hwaccel: false // Whether to use hardware acceleration
                     , position: 'absolute' // Element positioning
-                })
+                });
 
             function parseQuery (qstr) {
                 var query = {};
@@ -254,7 +255,7 @@
                 document.getElementById('map').style.width = window.innerWidth + 'px';
                 document.getElementById('map').style.height = window.innerHeight + 'px';
                 map.invalidateSize(false);
-                updateImage();
+                updateEsImg();
                 if (shader.canvas) {
                     shader.canvas.style.width = window.innerWidth + 'px';
                     shader.canvas.style.height = window.innerHeight + 'px';
@@ -268,7 +269,16 @@
                 }
             }
 
-            var updateImage = debounce(function() {
+            var updateJsImg = debounce(function() {
+                if (shader.canvas) {
+                    scene.screenshot().then(function(screenshot) { 
+                        shader.loadTexture('u_texA',screenshot.url);
+                        shader.setUniform('u_pixel_density', window.devicePixelRatio);
+                    });
+                }
+            }, DEBOUNCE_TIME);
+
+            var updateEsImg = debounce(function() {
                 var size = map.getSize();
                 var width = size.x; //window.innerWidth;
                 var height = size.y; //window.innerHeight;
@@ -286,20 +296,16 @@
                             return response.text()
                         }).then(function(body) {
                             document.getElementById("paparazzi_log").innerHTML = '<pre>' + body + '</pre>';
-                            document.getElementById("console_log").style.height = window.innerHeight + 'px';
                         })
 
                     shader.loadTexture('u_texB',this);
-                    finishUpdate();
 
-                    scene.screenshot().then(function(screenshot) {
-                        shader.loadTexture('u_texA',screenshot.url);
-                    });
+                    finishUpdate();
                 };
 
                 downloadingImage.src = lastReq;
                 startUpdate();
-            }, 1000);
+            }, DEBOUNCE_TIME);
 
             // Every time someone change the URL to the .yaml scene file
             function newURL(e) {
@@ -370,7 +376,7 @@
                     if (pos.lat != lastPos.lat ||
                         pos.lng != lastPos.lng ) {
                         lastPos = pos;
-                        updateImage();
+                        updateEsImg();
                     }
                 });
 
@@ -379,7 +385,13 @@
                     var zoom = map.getZoom();
                     if (zoom != lastZoom) {
                         lastZoom = zoom;
-                        updateImage();
+                        updateEsImg();
+                    }
+                });
+
+                scene.subscribe({
+                    view_complete: function () {
+                        updateJsImg();
                     }
                 });
 
