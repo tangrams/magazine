@@ -269,16 +269,16 @@
                 }
             }
 
-            // var updateJsImg = debounce(function() {
-            var updateJsImg = function() {
+            var updateJsImg = debounce(function() {
+            // var updateJsImg = function() {
                 if (shader.canvas) {
                     scene.screenshot().then(function(screenshot) { 
                         shader.loadTexture('u_texA',screenshot.url);
                         shader.setUniform('u_pixel_density', window.devicePixelRatio);
                     });
                 }
-            }
-            // }, DEBOUNCE_TIME);
+            // }
+            }, DEBOUNCE_TIME);
 
             var updateEsImg = debounce(function() {
                 var size = map.getSize();
@@ -301,6 +301,11 @@
                         })
 
                     shader.loadTexture('u_texB',this);
+
+                    scene.screenshot().then(function(screenshot) { 
+                        shader.loadTexture('u_texA',screenshot.url);
+                        shader.setUniform('u_pixel_density', window.devicePixelRatio);
+                    });
 
                     finishUpdate();
                 };
