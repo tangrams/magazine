@@ -23,6 +23,8 @@
         <script src="src/bootstrap.min.js"></script>
         <!-- GlslViewer -->
         <script type="text/javascript" src="src/GlslCanvas.js"></script>
+        <!-- Fetch.js -->
+        <script type="text/javascript" src="src/fetch.js"></script>
 
     <!-- End of 3rd party libraries -->
 
@@ -279,9 +281,13 @@
                     container.innerHTML = "";
                     container.appendChild(this);
 
-                    // Download the 
-                    document.getElementById("paparazzi_log").innerHTML='<object id="console_log" type="text/html" style="width: 100%; height:100%;" data="'+lastReq+'&ext=log'+'" crossorigin="anonymous"></object>';
-                    document.getElementById("console_log").style.height = window.innerHeight + 'px';
+                    fetch(lastReq+'&ext=log')
+                        .then(function(response) {
+                            return response.text()
+                        }).then(function(body) {
+                            document.getElementById("paparazzi_log").innerHTML = '<pre>' + body + '</pre>';
+                            document.getElementById("console_log").style.height = window.innerHeight + 'px';
+                        })
 
                     shader.loadTexture('u_texB',this);
                     finishUpdate();
