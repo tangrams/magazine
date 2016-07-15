@@ -41,7 +41,7 @@ void main() {
     vec3 diff_color = u_diff_color;
     if (pixel_density == 0.) pixel_density = 2.;
     if (focus_zoom == 0.) focus_zoom = 2.;
-    if (focus_area == 0.) focus_area = 0.01;
+    if (focus_area == 0.) focus_area = 0.1;
     if (ui_color == vec3(0.)) ui_color = vec3(0.200,0.478,0.718);
     if (diff_color == vec3(0.)) diff_color =  vec3(1.,0.,0.);
     // mode = 2.;
