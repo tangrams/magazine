@@ -17,10 +17,13 @@
         <script type="text/javascript" src="https://mapzen.com/tangram/0.8/tangram.min.js"></script>
         <!-- Spinning wheel -->
         <script type="text/javascript" src="src/spin.min.js"></script>
-        <!-- Bootstrap -->
+        <!-- UI -->
         <link rel="stylesheet" href="src/bootstrap.min.css">
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
         <script type="text/javascript" src="src/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="src/nouislider.min.css">
+        <script type="text/javascript" src="src/nouislider.min.js"></script>
+
         <!-- GlslViewer -->
         <script type="text/javascript" src="src/GlslCanvas.js"></script>
         <!-- Fetch.js -->
@@ -94,6 +97,14 @@
                 position: absolute;
                 margin: 5px;
             }
+
+            #zoom-slider {
+                width: 300px;
+                position: absolute;
+                margin: 5px;
+                right: 50%;
+                transform: translate(+50%,+50%);
+            }
         </style>
     </head>
 
@@ -112,14 +123,15 @@
                 <div id="map" class="tab-pane active" ></div>
                 <div id="map_shader" class="tab-pane">
                     <div id="shader_btn">
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(0)">Side-by-side</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(1)">Area</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(2)">Ghost</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(3)">Abs Diff</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(4)">Max Diff</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(5)">JS + Diff</button>
-                        <button type="button" class="btn btn-default" onclick="setShaderMode(6)">ES + Diff</button>
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Mode
+                        <span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li onclick="setShaderMode(0)"><a href="#">JS vs ES</a></li>
+                            <li onclick="setShaderMode(1)"><a href="#">just difference</a></li>
+                            <li onclick="setShaderMode(2)"><a href="#">JS vs ES + difference</a></li>
+                        </ul>
                     </div>
+                    <div class="sliders" id="zoom-slider"></div>
                     <canvas id="shader" data-fragment-url="shader.frag" width="500" height="500"></canvas>
                 </div>
                 <div id="paparazzi_image" class="tab-pane"></div>
@@ -273,7 +285,7 @@
             // var updateJsImg = function() {
                 if (shader.canvas) {
                     scene.screenshot().then(function(screenshot) { 
-                        shader.loadTexture('u_texA',screenshot.url);
+                        shader.loadTexture('u_texA',screenshot.url, { filtering: 'nearest' });
                         shader.setUniform('u_pixel_density', window.devicePixelRatio);
                     });
                 }
@@ -300,10 +312,10 @@
                             document.getElementById("paparazzi_log").innerHTML = '<pre>' + body + '</pre>';
                         })
 
-                    shader.loadTexture('u_texB',this);
+                    shader.loadTexture('u_texB',this, { filtering: 'nearest' });
 
                     scene.screenshot().then(function(screenshot) { 
-                        shader.loadTexture('u_texA',screenshot.url);
+                        shader.loadTexture('u_texA',screenshot.url, { filtering: 'nearest' });
                         shader.setUniform('u_pixel_density', window.devicePixelRatio);
                     });
 
@@ -406,6 +418,25 @@
                 if (window.self !== window.top) {
                     map.scrollWheelZoom.disable();
                 }
+
+                var zoomSlider = document.getElementById('zoom-slider');
+                noUiSlider.create(zoomSlider, {
+                    start: [ 0 ],
+                    range: {
+                        'min': [ 0.001 ],
+                        'max': [ .2 ]
+                    },
+                    margin: 20,
+                });
+
+                zoomSlider.noUiSlider.on('slide', function ( values, handle ) {
+                    if (shader.canvas) {
+                        if ( handle == 0 ) {
+                            shader.setUniform('u_focus_area', parseFloat(values[handle]));
+                        }
+                    }
+                });
+
                 return map;
             }());
         </script>
