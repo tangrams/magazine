@@ -40,8 +40,8 @@ void main() {
     vec3 ui_color = u_ui_color;
     vec3 diff_color = u_diff_color;
     if (pixel_density == 0.) pixel_density = 2.;
-    if (focus_zoom == 0.) focus_zoom = 2.;
-    if (focus_area == 0.) focus_area = 0.1;
+    if (focus_zoom == 0.) focus_zoom = 1.;
+    // if (focus_area == 0.) focus_area = 0.1;
     if (ui_color == vec3(0.)) ui_color = vec3(0.200,0.478,0.718);
     if (diff_color == vec3(0.)) diff_color =  vec3(1.,0.,0.);
     // mode = 2.;
@@ -56,7 +56,7 @@ void main() {
     st_zoom -= .5;
     float focus_point = magnif(st_zoom,resolution, mouse-.5);
     float focus_zone = step(focus_area,focus_point);
-    st_zoom = mix(((st_zoom+mouse-.5)/focus_zoom),st_zoom,focus_zone);
+    st_zoom = mix(((st_zoom+(mouse-.5)*(focus_zoom-1.))/focus_zoom),st_zoom,focus_zone);
     st_zoom += .5;
     
     vec3 color = vec3(0.);
@@ -79,7 +79,7 @@ void main() {
     }
     
     color = mix(color, ui_color, pulse(mouse.x,(pixel_density/resolution.x),st.x)*focus_zone);
-    color = mix(color, ui_color, pulse(focus_area,(pixel_density/resolution.x),focus_point));
+    // color = mix(color, ui_color, pulse(focus_area,(pixel_density/resolution.x),focus_point));
     
     gl_FragColor = vec4(color,1.0);
 }
