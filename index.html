@@ -14,7 +14,7 @@
         <!-- bog-standard leaflet URL hash -->
         <script type="text/javascript" src="https://cdn.rawgit.com/mlevans/leaflet-hash/master/leaflet-hash.js"></script>
         <!-- Main tangram library -->
-        <script type="text/javascript" src="https://mapzen.com/tangram/0.8/tangram.min.js"></script>
+        <script type="text/javascript" src="https://mapzen.com/tangram/0.9/tangram.min.js"></script>
         <!-- Spinning wheel -->
         <script type="text/javascript" src="src/spin.min.js"></script>
         <!-- UI -->
@@ -64,14 +64,6 @@
                 margin: 0px;
                 padding: 0px;
                 background: rgba(0, 0, 0, 0);
-            }
-
-            #paparazzi_log{
-                height: 100%;
-                width: 100%;
-                margin: 0px;
-                padding: 0px;
-                background: white;
             }
 
             #shader_container {
@@ -133,7 +125,6 @@
             <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
                 <li role="presentation" class="active"><a data-toggle="tab" href="#map"><span class="glyphicon glyphicon-move" aria-hidden="true"></span></a></li>
                 <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_image"><span class="glyphicon glyphicon-phone" aria-hidden="true"></span></a></li>
-                <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#paparazzi_log"><span class="glyphicon glyphicon-console" aria-hidden="true"></span></a></li>
                 <li role="presentation" class="paparazzi_dep"><a data-toggle="tab" href="#map_shader"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a></li>
                 <li id='url_container' >
                     <input id="url_input" class="form-control" value="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" placeholder="https://tangrams.github.io/tangram-sandbox/styles/default.yaml" onchange="newURL(this)">
@@ -143,7 +134,6 @@
                 <div id="map" class="tab-pane active" >
                     </div>
                 <div id="paparazzi_image" class="tab-pane"></div>
-                <div id="paparazzi_log" class="tab-pane"></div>
                 <div id="map_shader" class="tab-pane">
                     <div id="shader_btn">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Mode
@@ -172,8 +162,8 @@
             // CONST
             var DEBOUNCE_TIME = 2000;
             var DEFAULT_STYLE = 'https://tangrams.github.io/tangram-sandbox/styles/default.yaml';
-            var PAPARAZI_SERVER = '54.175.238.166';
-            // PAPARAZI_SERVER = 'http://192.168.2.134:8080/';
+            var PAPARAZI_SERVER = '52.90.135.245';
+            // PAPARAZI_SERVER = 'localhost:8080';
 
             // global var
             var lastPos = {lat:40.70531887544228, lng: -74.00976419448853};
@@ -327,13 +317,6 @@
                 downloadingImage.onload = function(){
                     container.innerHTML = "";
                     container.appendChild(this);
-
-                    fetch('https://crossorigin.me/https://'+lastReq+'&ext=log')
-                        .then(function(response) {
-                            return response.text()
-                        }).then(function(body) {
-                            document.getElementById("paparazzi_log").innerHTML = '<pre>' + body + '</pre>';
-                        })
 
                     shader.loadTexture('u_texB',this, { filtering: 'nearest' });
 
