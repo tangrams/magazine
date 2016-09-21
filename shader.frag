@@ -2,8 +2,8 @@
 precision mediump float;
 #endif
 
-uniform sampler2D u_texA;   // https://dl.dropboxusercontent.com/u/335522/mapzen/js.png
-uniform sampler2D u_texB;   // https://dl.dropboxusercontent.com/u/335522/mapzen/es.png
+uniform sampler2D u_texA; // ./images/magazine.png
+uniform sampler2D u_texB; // ./images/magazine.png
 
 uniform vec3 u_ui_color;
 uniform vec3 u_diff_color;
